@@ -1,13 +1,23 @@
 import * as Three from "three";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js"
 import * as dat from "dat.gui";
+import star from "../img/stars.jpg"
+import nebula from "../img/nebula.jpg"
 
 const renderer=new Three.WebGLRenderer();
 
 renderer.shadowMap.enabled=true;
 renderer.setSize(window.innerWidth,window.innerHeight);
 
+// set bg color
+//renderer.setClearColor(0xFff)
 
+const mouseposition=new Three.Vector2();
+window.addEventListener("mousemove",function(e){
+  e.preventDefault();
+  mouseposition.x=(e.clientX/this.window.innerWidth)*2-1;
+  mouseposition.y=(e.clientY/this.window.innerHeight)*2+1;
+});
 document.body.appendChild(renderer.domElement);
 
 const scene=new Three.Scene()
@@ -18,6 +28,15 @@ const camera =new Three.PerspectiveCamera(
     1000
 );
 
+//single bg
+
+const display2=new Three.TextureLoader();
+// scene.background=display.load(star);
+
+
+//multiside bg
+const display=new Three.CubeTextureLoader()
+scene.background=display.load([star,nebula,nebula,star,nebula,star])
 
 const orbit=new OrbitControls(camera,renderer.domElement);
 const axesHelper=new Three.AxesHelper(5);
@@ -26,7 +45,44 @@ camera.position.set(0,0,5);
 
 
 const BoxGeometry=new Three.BoxGeometry(2.5,2.5,2.5);
-const BoxMaterial=new Three.MeshBasicMaterial({color:0xFFB996});
+
+//one side
+
+// const BoxMaterial=new Three.MeshBasicMaterial({
+//   // color:0xFFB996
+//   map:display2.load(nebula)
+//  });
+ 
+
+
+//six side different image
+const BoxMaterial=[new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(nebula)
+ }),
+ new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(nebula)
+ }),
+ new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(nebula)
+ }),
+ new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(nebula)
+ }),
+ new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(star)
+ }),
+ new Three.MeshBasicMaterial({
+  // color:0xFFB996
+  map:display2.load(nebula)
+ }),
+
+]
+
 const box=new Three.Mesh(BoxGeometry,BoxMaterial);
 scene.add(box);
 
@@ -49,9 +105,11 @@ const gridHelper=new Three.GridHelper(30);
 scene.add(gridHelper);
 
 //light
-const ambient=new Three.AmbientLight(0xFFfFFf);
+const ambient=new Three.AmbientLight(0xFFfFFf); 
 
 scene.add(ambient);
+
+sphere.name="spehere1"
 
 const direction=new Three.DirectionalLight(0xFFfFFf);
 direction.position.set(-30,50,0)
@@ -87,12 +145,24 @@ gui.add(options,"speed",0,0.1);
 
 let step=0;
 
+const raycaster=new Three.Raycaster();
+
+
 
 function animation(time){
     box.rotation.x=time/1000;
     box.rotation.y=time/1000;
     step +=options.speed;
     sphere.position.y=Math.abs(Math.sin(step))*10;
+    raycaster.setFromCamera(mouseposition,camera);
+    const intersect=raycaster.intersectObjects(scene.children);
+
+    intersect.map((item,index)=>{
+      return(
+        item.object.name==="spehere1"?item.object.material.color.set(0xFFFFFF):null
+      )
+    })
+
     renderer.render(scene,camera);
 }
 
